@@ -40,6 +40,46 @@ namespace SayMore.Model
 			Skipped
 		}
 
+		/// ------------------------------------------------------------------------------------
+		/// <summary>
+		/// Searches the session cache file named "{Id}_cache.txt" in the session folder.
+		/// The search always ignores case.
+		/// If "contains" is true (default) returns lines that contain the query; otherwise
+		/// returns lines that exactly match the query.
+		/// </summary>
+		/// ------------------------------------------------------------------------------------
+		public IEnumerable<string> SearchCacheFile(string query)
+		{
+			if (string.IsNullOrEmpty(query))
+				yield break;
+
+			var cacheFile = Path.Combine(FolderPath, Id + "_cache.txt");
+			if (!File.Exists(cacheFile))
+				yield break;
+
+			IEnumerable<string> lines;
+			try
+			{
+				lines = File.ReadLines(cacheFile);
+			}
+			catch (Exception)
+			{
+				yield break;
+			}
+
+			var comparison = StringComparison.OrdinalIgnoreCase;
+
+			foreach (var line in lines)
+			{
+				if (line == null)
+					continue;
+
+				if (line.IndexOf(query, comparison) >= 0)
+					Console.WriteLine(query);
+					yield return line;
+			}
+		}
+
 		//autofac uses this
 		public delegate Session Factory(string parentElementFolder, string id);
 

@@ -32,6 +32,8 @@ namespace SayMoreTests.Model
 			_parentFolder = new TemporaryFolder("sessionTest");
 		}
 
+		
+
 		/// ------------------------------------------------------------------------------------
 		[TearDown]
 		public void TearDown()
@@ -436,8 +438,35 @@ namespace SayMoreTests.Model
 				Assert.AreEqual(TimeSpan.Zero, session.GetTotalDurationOfSourceMedia());
 			}
 		}
+		/// ------------------------------------------------------------------------------------
+		[Test]
+		public void SearchCacheFile_ReturnsMatchingLines()
+		{
+			using (var session = CreateSession(new string[] { }))
+			{
+				// Ensure session folder exists
+				Directory.CreateDirectory(session.FolderPath);
 
-		
+				var cachePath = Path.Combine(session.FolderPath, session.Id + "_cache.txt");
+				File.WriteAllLines(cachePath, new[] { "Apple pie", "banana bread", "Cherry tart", "pie apple" });
+
+				var results = session.SearchCacheFile("apple").ToList();
+				Assert.AreEqual(2, results.Count);
+				Assert.Contains("Apple pie", results);
+				Assert.Contains("pie apple", results);
+
+				// Different case
+				var results2 = session.SearchCacheFile("BREAD").ToList();
+				Assert.AreEqual(1, results2.Count);
+				Assert.AreEqual("banana bread", results2[0]);
+
+				// Query not present
+				var results3 = session.SearchCacheFile("donut").ToList();
+				Assert.AreEqual(0, results3.Count);
+			}
+		}
+
+
 		private static void ValidateSessionLevelDetails(SessionContribution contribution,
 			Session session, bool specificFile = false)
 		{
