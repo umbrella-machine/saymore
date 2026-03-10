@@ -31,6 +31,9 @@ namespace SayMore.UI.ElementListScreen
 			_newSessionsFromFileDlgViewModel = newSessionsFromFileDlgViewModel;
 			InitializeComponent();
 
+			// Show the search box for sessions list only
+			_sessionsListPanel.ShowSearchBar = true;
+
 			if (DesignMode)
 				return;
 

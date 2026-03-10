@@ -19,6 +19,17 @@ namespace SayMore.UI.LowLevelControls
 		public event EventHandler NewButtonClicked;
 		public event EventHandler DeleteButtonClicked;
 
+	/// <summary>
+	/// Raised when the text in the search box changes.
+	/// </summary>
+	public event EventHandler SearchTextChanged;
+
+	/// <summary>
+	/// Raised when the user types in the search box and a search should be performed.
+	/// Only fired when there are three or more characters in the search box.
+	/// </summary>
+	public event EventHandler SearchRequested;
+
 		private readonly List<Button> _buttons = new List<Button>();
 
 		public Color ButtonPanelBackColor1 { get; set; }
@@ -31,6 +42,12 @@ namespace SayMore.UI.LowLevelControls
 
 		protected Control _listControl;
 		protected bool _showColumnChooserButton;
+
+		// Backing field for whether the header search box is shown. Developers can set
+		// the ShowSearchBar property to hide or show the search box at runtime.
+		private bool _showSearchBar;
+
+		//private TextBox searchbox;
 
 		/// ------------------------------------------------------------------------------------
 		public ListPanel()
@@ -51,6 +68,13 @@ namespace SayMore.UI.LowLevelControls
 				return;
 
 			_headerLabel.Font = FontHelper.MakeFont(Program.DialogFont, FontStyle.Bold);
+
+			if (_searchTextBox != null)
+			{
+				_searchTextBox.Visible = false;
+				_searchTextBox.TextChanged += _searchTextBox_TextChanged;
+				_searchTextBox.KeyUp += _searchTextBox_KeyUp;
+			}
 		}
 
 		/// ------------------------------------------------------------------------------------
@@ -227,5 +251,59 @@ namespace SayMore.UI.LowLevelControls
 			foreach (var b in _buttons)
 				_buttonsFlowLayoutPanel.Controls.Add(b);
 		}
+
+		/// ------------------------------------------------------------------------------------
+		/// <summary>
+		/// Allows For search bar in header panel.
+		/// </summary>
+		/// ------------------------------------------------------------------------------------
+		private void _searchTextBox_TextChanged(object sender, EventArgs e)
+		{
+			SearchTextChanged?.Invoke(this, e);
+		}
+
+		/// <summary>
+		/// Handle key input in the search box. Only request a search when
+		/// there are 3 or more characters typed.
+		/// </summary>
+		private void _searchTextBox_KeyUp(object sender, KeyEventArgs e)
+		{
+			if (_searchTextBox == null)
+				return;
+
+			var text = _searchTextBox.Text ?? string.Empty;
+			if (text.Length >= 3)
+			{
+				// Notify listeners that they should perform a search now.
+				SearchRequested?.Invoke(this, EventArgs.Empty);
+			}
+		}
+
+		/// <summary>
+		/// Gets or sets whether the search box in the header is visible.
+		/// Developers can hide or show the search box using this property.
+		/// </summary>
+		[DefaultValue(false)]
+		public bool ShowSearchBar
+		{
+			get { return _searchTextBox != null && _searchTextBox.Visible; }
+			set
+			{
+				if (_searchTextBox == null)
+					return;
+				_searchTextBox.Visible = value;
+			}
+		}
+
+		/// <summary>
+		/// Current text in the search box.
+		/// </summary>
+		[Browsable(false)]
+		public string SearchText
+		{
+			get { return _searchTextBox?.Text ?? string.Empty; }
+			set { if (_searchTextBox != null) _searchTextBox.Text = value; }
+		}
+
 	}
 }
