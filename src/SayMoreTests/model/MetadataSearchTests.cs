@@ -25,6 +25,18 @@ namespace SayMoreTests.model
 		}
 
 		/// ------------------------------------------------------------------------------------
+		///<summary>
+		///helper method to create temporary XML files
+		///</summary>
+		/// ------------------------------------------------------------------------------------
+		private string CreateTestXmlFile(string xmlContent)
+		{
+			var filePath = Path.Combine(_tempFolder.Path, "data.xml");
+			File.WriteAllText(filePath, xmlContent);
+			return filePath;
+		}
+
+		/// ------------------------------------------------------------------------------------
 		[Test]
 		public void SearchXMLFile_QueryFoundInSearchableTag_ReturnsTrue()
 		{
@@ -134,17 +146,7 @@ namespace SayMoreTests.model
 			Assert.IsTrue(MetadataSearch.SearchXMLFile("berr", filePath, searchableTags));
 		}
 
-		/// ------------------------------------------------------------------------------------
-		///<summary>
-		///helper method to create temporary XML files
-		///</summary>
-		/// ------------------------------------------------------------------------------------
-		private string CreateTestXmlFile(string xmlContent)
-		{
-			var filePath = Path.Combine(_tempFolder.Path, "data.xml");
-			File.WriteAllText(filePath, xmlContent);
-			return filePath;
-		}
+		
 		
 		
 
