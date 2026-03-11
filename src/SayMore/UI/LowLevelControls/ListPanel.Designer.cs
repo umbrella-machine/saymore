@@ -155,7 +155,6 @@ namespace SayMore.UI.LowLevelControls
             this._searchTextBox.Name = "_searchTextBox";
             this._searchTextBox.Size = new System.Drawing.Size(180, 23);
             this._searchTextBox.TabIndex = 1;
-            this._searchTextBox.TextChanged += new System.EventHandler(this._searchTextBox_TextChanged);
             // 
             // ListPanel
             // 

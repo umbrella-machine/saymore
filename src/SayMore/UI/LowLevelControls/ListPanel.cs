@@ -72,7 +72,6 @@ namespace SayMore.UI.LowLevelControls
 			if (_searchTextBox != null)
 			{
 				_searchTextBox.Visible = false;
-				_searchTextBox.TextChanged += _searchTextBox_TextChanged;
 				_searchTextBox.KeyUp += _searchTextBox_KeyUp;
 			}
 		}
@@ -257,10 +256,7 @@ namespace SayMore.UI.LowLevelControls
 		/// Allows For search bar in header panel.
 		/// </summary>
 		/// ------------------------------------------------------------------------------------
-		private void _searchTextBox_TextChanged(object sender, EventArgs e)
-		{
-			SearchTextChanged?.Invoke(this, e);
-		}
+
 
 		/// <summary>
 		/// Handle key input in the search box. Only request a search when
