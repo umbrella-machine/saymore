@@ -21,7 +21,7 @@ namespace SayMore.Model
 
 		public bool SearchSession(string query)
 		{
-			Console.WriteLine("Searching for {0}", query);
+			System.Diagnostics.Debug.WriteLine("Searching for " + query);
 			var allSessions = _projectContext.Project.GetAllSessions(CancellationToken.None);
 
 			foreach (var session in allSessions)
