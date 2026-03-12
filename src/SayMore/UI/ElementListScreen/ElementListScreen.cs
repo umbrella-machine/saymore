@@ -278,6 +278,7 @@ namespace SayMore.UI.ElementListScreen
 
 			_elementsGrid.Refresh();
 		}
+		
 
 		/// ------------------------------------------------------------------------------------
 		protected void UpdateComponentFileList()

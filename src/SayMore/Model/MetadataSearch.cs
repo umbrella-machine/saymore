@@ -9,7 +9,7 @@ using SayMore.Model.Files;
 
 namespace SayMore.Model
 {
-	internal class MetadataSearch
+	public class MetadataSearch
 	{
 		
 		private readonly ProjectContext _projectContext;
@@ -21,6 +21,7 @@ namespace SayMore.Model
 
 		public bool SearchSession(string query)
 		{
+			Console.WriteLine("Searching for {0}", query);
 			var allSessions = _projectContext.Project.GetAllSessions(CancellationToken.None);
 
 			foreach (var session in allSessions)
@@ -64,6 +65,7 @@ namespace SayMore.Model
 					{
 						if (SessionSearchableTags.Contains(field.FieldId.ToLower()) && String.Equals(field.Value?.ToString(), query, StringComparison.OrdinalIgnoreCase))
 						{
+							Console.WriteLine("Found {0}", query);
 							return true;
 						}
 					}

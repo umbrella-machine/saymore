@@ -17,17 +17,19 @@ namespace SayMore.UI.ElementListScreen
 	public partial class SessionsListScreen : ConcreteSessionScreen, ISayMoreView
 	{
 		private readonly NewSessionsFromFileDlgViewModel.Factory _newSessionsFromFileDlgViewModel;
+		private readonly MetadataSearch _metadataSearch;
 
 		/// ------------------------------------------------------------------------------------
 		public SessionsListScreen(ElementListViewModel<Session> presentationModel,
 			NewSessionsFromFileDlgViewModel.Factory newSessionsFromFileDlgViewModel,
-			SessionsGrid.Factory sessionGridFactory)
+			SessionsGrid.Factory sessionGridFactory, MetadataSearch metadataSearch)
 			: base(presentationModel)
 		{
 			Logger.WriteEvent("PersonListScreen constructor");
 
 			_elementsGrid = sessionGridFactory();
 			_elementsGrid.Name = "SessionsGrid";
+			_metadataSearch = metadataSearch;
 			_newSessionsFromFileDlgViewModel = newSessionsFromFileDlgViewModel;
 			InitializeComponent();
 
@@ -59,6 +61,13 @@ namespace SayMore.UI.ElementListScreen
 			_elementsListPanel.HeaderPanelBackColor1 = Settings.Default.SessionEditorsButtonBackgroundColor2;
 			_elementsListPanel.HeaderPanelBackColor2 = Settings.Default.SessionEditorsButtonBackgroundColor1;
 			_elementsListPanel.HeaderPanelBottomBorderColor = Settings.Default.SessionEditorsBorderColor;
+		}
+
+		protected override void LoadElementList(object itemToSelectAfterLoad, string searchParam = null)
+		{
+			if (!string.IsNullOrWhiteSpace(searchParam))
+				_metadataSearch.SearchSession(searchParam);
+			base.LoadElementList(itemToSelectAfterLoad, searchParam);
 		}
 
 		/// ------------------------------------------------------------------------------------
