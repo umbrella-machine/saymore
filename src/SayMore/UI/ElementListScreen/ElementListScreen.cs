@@ -52,8 +52,14 @@ namespace SayMore.UI.ElementListScreen
 		/// </summary>
 		private void HandleSearchRequested(object sender, EventArgs e)
 		{
-			// Forward the current search text to the overload of LoadElementList that accepts a searchParam.
-			LoadElementList(null, _elementsListPanel?.SearchText);
+           // Forward the current search text to the overload of LoadElementList that accepts a searchParam.
+			// If the search text is 2 or fewer characters, treat it as no search (show full list).
+            var search = _elementsListPanel?.SearchText;
+			// If empty or whitespace, show full list. Otherwise pass the search text
+			if (string.IsNullOrWhiteSpace(search))
+				LoadElementList(null, null);
+			else
+				LoadElementList(null, search);
 		}
 
 		/// ------------------------------------------------------------------------------------
@@ -232,13 +238,14 @@ namespace SayMore.UI.ElementListScreen
 		}
 
 		/// ------------------------------------------------------------------------------------
-		protected virtual void LoadElementList(object itemToSelectAfterLoad, string searchParam = null)
+     protected virtual void LoadElementList(object itemToSelectAfterLoad, string searchParam = null)
 		{
 			// Start with all elements, ordered by id
 			IEnumerable<ProjectElement> items = _model.Elements.OrderBy(x => x.Id);
 
 			// If a search parameter was provided, restrict to elements whose Id
-			// contains the search text (case-insensitive).
+			// contains the search text (case-insensitive). This applies to any
+			// non-empty searchParam (including 1-2 char searches).
 			if (!string.IsNullOrWhiteSpace(searchParam))
 			{
 				items = items.Where(x => !string.IsNullOrEmpty(x.Id) &&

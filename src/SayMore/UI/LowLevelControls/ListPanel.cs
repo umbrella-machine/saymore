@@ -32,6 +32,8 @@ namespace SayMore.UI.LowLevelControls
 
 		private readonly List<Button> _buttons = new List<Button>();
 
+		private System.Windows.Forms.Timer _searchTimer;
+
 		public Color ButtonPanelBackColor1 { get; set; }
 		public Color ButtonPanelBackColor2 { get; set; }
 		public Color ButtonPanelTopBorderColor { get; set; }
@@ -72,7 +74,18 @@ namespace SayMore.UI.LowLevelControls
 			if (_searchTextBox != null)
 			{
 				_searchTextBox.Visible = false;
-				_searchTextBox.KeyUp += _searchTextBox_KeyUp;
+               _searchTextBox.KeyUp += _searchTextBox_KeyUp;
+
+            _searchTimer = new System.Windows.Forms.Timer();
+			_searchTimer.Interval = 1500; // default 1.5 seconds; will be adjusted as needed
+			_searchTimer.Tick += (s, e) =>
+			{
+				_searchTimer.Stop();
+				// When the timer fires, re-evaluate the current text and raise SearchRequested.
+				var textNow = _searchTextBox.Text ?? string.Empty;
+				// Invoke SearchRequested for whatever the current text warrants (filtered or full list).
+				SearchRequested?.Invoke(this, EventArgs.Empty);
+			};
 			}
 		}
 
@@ -251,16 +264,8 @@ namespace SayMore.UI.LowLevelControls
 				_buttonsFlowLayoutPanel.Controls.Add(b);
 		}
 
-		/// ------------------------------------------------------------------------------------
 		/// <summary>
-		/// Allows For search bar in header panel.
-		/// </summary>
-		/// ------------------------------------------------------------------------------------
-
-
-		/// <summary>
-		/// Handle key input in the search box. Only request a search when
-		/// there are 3 or more characters typed.
+		/// Handle key input in the search box. 
 		/// </summary>
 		private void _searchTextBox_KeyUp(object sender, KeyEventArgs e)
 		{
@@ -268,10 +273,25 @@ namespace SayMore.UI.LowLevelControls
 				return;
 
 			var text = _searchTextBox.Text ?? string.Empty;
-			if (text.Length >= 3)
+           // If there are three or more characters, request a filtered search.
+			// If there are two or one characters, request a filtered search after a delay.
+            if (text.Length >= 3)
 			{
-				// Notify listeners that they should perform a search now.
+				// For 3+ chars, perform the filtered search immediately (no delay).
+				_searchTimer.Stop();
 				SearchRequested?.Invoke(this, EventArgs.Empty);
+			}
+			else if (text.Length == 0)
+			{
+				// If the search box is empty, show the full list immediately.
+				_searchTimer.Stop();
+				SearchRequested?.Invoke(this, EventArgs.Empty);
+			}
+			else // For 1-2 chars, delay the action by 1.5 seconds to avoid excessive refreshes.
+			{
+				_searchTimer.Interval = 1500;
+				_searchTimer.Stop();
+				_searchTimer.Start();
 			}
 		}
 

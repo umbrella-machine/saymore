@@ -112,7 +112,7 @@ namespace SayMore.UI.ElementListScreen
 			this._sessionsListPanel.ShowColumnChooserButton = true;
 			this._sessionsListPanel.Size = new System.Drawing.Size(182, 350);
 			this._sessionsListPanel.TabIndex = 0;
-			this._sessionsListPanel.Text = "Sessionsbc";
+			this._sessionsListPanel.Text = "Sessions";
 			// 
 			// _componentsSplitter
 			// 
