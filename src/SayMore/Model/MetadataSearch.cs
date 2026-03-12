@@ -2,91 +2,74 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Xml;
+using SayMore.Model.Files;
 
 namespace SayMore.Model
 {
 	internal class MetadataSearch
 	{
-		public static bool SearchXMLFile(string query, string filePath, HashSet<string> searchableTags)
+		
+		private readonly ProjectContext _projectContext;
+
+		public MetadataSearch(ProjectContext projectContext)
 		{
-			var sessionSearchableTags = new HashSet<string>
+			_projectContext = projectContext;
+		}
+
+		public bool SearchSession(string query)
+		{
+			var allSessions = _projectContext.Project.GetAllSessions(CancellationToken.None);
+
+			foreach (var session in allSessions)
 			{
-				"genre",
-				"title",
-				"setting",
-				"participants",
-				"situation",
-				"synopsis",
-				"location",
-				"access",
-				"notes",  // This serves both for the session notes and for the participant notes
-                "Location_Continent",
-				"Location_Country",
-				"Location_Region",
-				"Location_Address",
-				"Sub-Genre",
-				"name"
-			};
-
-			var eafSearchableTags = new HashSet<string>
-			{
-				"ANNOTATION_VALUE"
-			};
-
-			var metaSearchableTags = new HashSet<string>
-			{
-				"notes",  // This serves both for the session notes and for the participant notes
-                "name",
-				"Microphone",
-				"Device",
-				"participants"
-			};
-
-			using var reader = XmlReader.Create(filePath);
-
-			bool isCustomField = false;
-
-			while (reader.Read())
-			{
-
-				if (reader.NodeType == XmlNodeType.Element)
+				foreach (var componentFile in session.GetComponentFiles())
 				{
-
-					if (reader.Name == "CustomFields")
+					var SessionSearchableTags = new HashSet<string>
 					{
-						isCustomField = true;
-						continue;
-					}
-
-					if ((eafSearchableTags.Contains(reader.Name) || isCustomField) && !reader.IsEmptyElement)
+						"genre",
+						"title",
+						"setting",
+						"participants",
+						"situation",
+						"synopsis",
+						"location",
+						"access",
+						"notes",  // This serves both for the session notes and for the participant notes
+						"location_continent",
+						"location_country",
+						"location_region",
+						"location_address",
+						"sub-genre",
+						"name"
+					};
+					/*switch ()
 					{
-						Console.WriteLine("Searching " + reader.Name);
-						string value = reader.ReadElementContentAsString();
-						if (value.Contains(query, StringComparison.OrdinalIgnoreCase))
+						case SessionFileType.Session:
+						
+						case SessionFileType.Eaf:
+						if (SearchEaf(query, file))
 						{
-							Console.WriteLine("FOUND!");
+							return true;
+						}
+						break;
+					case SessionFileType.Meta:
+						var searchableTags = 
+						break;
+				}*/
+					var fields = componentFile.MetaDataFieldValues;
+					foreach (var field in fields)
+					{
+						if (SessionSearchableTags.Contains(field.FieldId.ToLower()) && String.Equals(field.Value?.ToString(), query, StringComparison.OrdinalIgnoreCase))
+						{
 							return true;
 						}
 					}
-
-				}
-
-				else if (reader.NodeType == XmlNodeType.Element &&
-					reader.Name == "CustomFields")
-				{
-					isCustomField = false;
-				}
-
-				else
-				{
-					Console.WriteLine("Not searching " + reader.Name);
 				}
 			}
-
-			Console.WriteLine("NOT FOUND :(");
-			return false;
+		return false;
 		}
 	}
 }
