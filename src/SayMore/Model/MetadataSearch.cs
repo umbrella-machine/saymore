@@ -32,12 +32,13 @@ namespace SayMore.Model
 			"location",
 			"access",
 			"notes",  // This serves both for the general session notes and for the specific participant notes
-			"location_continent",
-			"location_country",
-			"location_region",
-			"location_address",
+			"continent",
+			"country",
+			"region",
+			"address",
 			"sub-genre",
-			"name"
+			"name",
+			"contributors"
 		};
 
 		private static readonly HashSet<string> annotationFileSearchableTags = new HashSet<string>
@@ -110,6 +111,7 @@ namespace SayMore.Model
 				}
 			}
 		}
+		
 		private HashSet<string> GetCustomFieldIds(ComponentFile file)
 		{
 			HashSet<string> customFields = new HashSet<string>();
