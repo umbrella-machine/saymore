@@ -1,15 +1,17 @@
-﻿using System;
-using System.IO;
+﻿using SayMore.Model.Files;
+using SIL.Core.ClearShare;
+using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using System.Threading;
-using System.Threading.Tasks;
-using System.Xml;
-using SayMore.Model.Files;
 
 namespace SayMore.Model
 {
+	/// ----------------------------------------------------------------------------------------
+	/// <summary>
+	/// The class that contains the data searching methods.
+	/// </summary>
+	/// ----------------------------------------------------------------------------------------
 	public class MetadataSearch
 	{
 		
@@ -20,7 +22,8 @@ namespace SayMore.Model
 			_projectContext = projectContext;
 		}
 
-		private static readonly HashSet<string> SessionFileSearchableTags = new HashSet<string>
+		// Searchable tags based on file type.
+		private static readonly HashSet<string> sessionFileSearchableTags = new HashSet<string>
 		{
 			"genre",
 			"title",
@@ -30,58 +33,133 @@ namespace SayMore.Model
 			"synopsis",
 			"location",
 			"access",
-			"notes",  // This serves both for the general session notes and for the specific participant notes
-			"location_continent",
-			"location_country",
-			"location_region",
-			"location_address",
+			"notes",
+			"continent",
+			"country",
+			"region",
+			"address",
 			"sub-genre",
-			"name"
-		};
-
-		private static readonly HashSet<string> AnnotationFileSearchableTags = new HashSet<string>
-		{
-			"ANNOTATION_VALUE"
-		};
-
-		private static readonly HashSet<string> OtherFileSearchableTags = new HashSet<string>
-		{
-			"notes",  // This serves both for the general session notes and for the specific participant notes
 			"name",
-			"Microphone",
-			"Device",
-			"participants"
+			"contributors",
+			"additional_location_country",
+			"additional_location_continent",
+			"additional_location_region",
+			"additional_location_address",
+			"additional_sub-genre",
+			"additional_interactivity",
+			"additional_planning_type",
+			"additional_involvement",
+			"additional_social_context",
+			"additional_task"
+		};
+
+		// We know this is not how you search for annotation files.
+		private static readonly HashSet<string> annotationFileSearchableTags = new HashSet<string>
+		{
+			"annotation_value"
+		};
+
+		private static readonly HashSet<string> otherFileSearchableTags = new HashSet<string>
+		{
+			"notes",
+			"name",
+			"microphone",
+			"device",
+			"participants",
+			"annotation_value",
+			"recordist",
+			"speaker"
 		};
 
 		public IEnumerable<string> SearchSessions(string query)
 		{
-			//System.Diagnostics.Debug.WriteLine("Searching for " + query);
 			var allSessions = _projectContext.Project.GetAllSessions(CancellationToken.None);
 
 			foreach (var session in allSessions)
 			{
+				bool found = false;
 				foreach (var componentFile in session.GetComponentFiles())
 				{
-					var searchableTags = Path.GetExtension(componentFile.PathToAnnotatedFile) switch
+					// Determins what file type is being searched for to determine searchable tags.
+					HashSet<string> searchableTags;
+					if (componentFile.FileType is SessionFileType)
 					{
-						".session" => SessionFileSearchableTags,
-						".annotation" => AnnotationFileSearchableTags,
-						_ => OtherFileSearchableTags // *****
-					};
+						searchableTags = new HashSet<string>(sessionFileSearchableTags.Union(GetCustomFieldIds(componentFile)));
+					}
+					else if (componentFile is AnnotationComponentFile)
+					{
+						searchableTags = annotationFileSearchableTags;
+					}
+					else if (componentFile is OralAnnotationComponentFile)
+					{
+						searchableTags = annotationFileSearchableTags;
+					}
+					else
+					{
+						searchableTags = new HashSet<string>(otherFileSearchableTags.Union(GetCustomFieldIds(componentFile)));
+					}
 
+					// Actually peforms the search and yields the session ID if found.
 					var fields = componentFile.MetaDataFieldValues;
 
 					foreach (var field in fields)
 					{
-						if (searchableTags.Contains(field.FieldId.ToLower()) && field.Value?.ToString().IndexOf(query, StringComparison.OrdinalIgnoreCase) >= 0)
+						if (searchableTags.Contains(field.FieldId?.ToLowerInvariant()) && 
+							(field.Value?.ToString() ?? string.Empty).IndexOf(query, StringComparison.OrdinalIgnoreCase) >= 0)
 						{
-							System.Diagnostics.Debug.WriteLine("Found " + query);
+							found = true;
 							yield return session.Id;
 							break;
 						}
 					}
+
+					// If the query wasn't found in the offical fields or the custom fields, check the contributer notes.
+					if (!found && componentFile.FileType is SessionFileType && ContainsContributorNotes(componentFile, query))
+					{
+						found = true;
+						yield return session.Id;
+					}
 				}
 			}
+		}
+
+
+		// Returns the custom fields for a given component file.
+		// Note: this does not work for audio files.
+		private HashSet<string> GetCustomFieldIds(ComponentFile file)
+		{
+			HashSet<string> customFields = new HashSet<string>();
+
+			if (file is ProjectElementComponentFile projectElementFile)
+			{
+				customFields = new HashSet<string>(
+					projectElementFile.GetCustomFields()
+						.Select(f => f.FieldId?.ToLowerInvariant())
+						.Where(id => !string.IsNullOrEmpty(id))
+				);
+			}
+			
+			return customFields;
+		}
+
+		// Checks through contributer notes of a given component file for a query.
+		private static bool ContainsContributorNotes(ComponentFile file, string query)
+		{
+			var contributionsField = file.MetaDataFieldValues
+				.FirstOrDefault(f => f.FieldId == SessionFileType.kContributionsFieldName);
+
+			if (contributionsField?.Value is ContributionCollection contributions)
+			{
+				foreach (var contribution in contributions)
+				{
+					if (!string.IsNullOrEmpty(contribution.Comments) &&
+						contribution.Comments.IndexOf(query, StringComparison.OrdinalIgnoreCase) >= 0)
+					{
+						return true;
+					}
+				}
+			}
+			return false;
 		}
 	}
 }
