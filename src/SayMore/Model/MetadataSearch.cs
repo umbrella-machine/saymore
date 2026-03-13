@@ -1,16 +1,16 @@
 ﻿using SayMore.Model.Files;
 using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
-using System.Net.NetworkInformation;
-using System.Text;
 using System.Threading;
-using System.Threading.Tasks;
-using System.Xml;
 
 namespace SayMore.Model
 {
+	/// ----------------------------------------------------------------------------------------
+	/// <summary>
+	/// The class that contains the data searching methods.
+	/// </summary>
+	/// ----------------------------------------------------------------------------------------
 	public class MetadataSearch
 	{
 		
@@ -31,14 +31,24 @@ namespace SayMore.Model
 			"synopsis",
 			"location",
 			"access",
-			"notes",  // This serves both for the general session notes and for the specific participant notes
+			"notes",
 			"continent",
 			"country",
 			"region",
 			"address",
 			"sub-genre",
 			"name",
-			"contributors"
+			"contributors",
+			"additional_location_country",
+			"additional_location_continent",
+			"additional_location_region",
+			"additional_location_address",
+			"additional_sub-genre",
+			"additional_interactivity",
+			"additional_planning_type",
+			"additional_involvement",
+			"additional_social_context",
+			"additional_task"
 		};
 
 		private static readonly HashSet<string> annotationFileSearchableTags = new HashSet<string>
@@ -48,7 +58,7 @@ namespace SayMore.Model
 
 		private static readonly HashSet<string> otherFileSearchableTags = new HashSet<string>
 		{
-			"notes",  // This serves both for the general session notes and for the specific participant notes
+			"notes",
 			"name",
 			"microphone",
 			"device",
@@ -68,6 +78,7 @@ namespace SayMore.Model
 				bool found = false;
 				foreach (var componentFile in session.GetComponentFiles())
 				{
+					// Determins what file type is being searched for to determine searchable tags.
 					HashSet<string> searchableTags;
 					if (componentFile.FileType is SessionFileType)
 					{
@@ -75,18 +86,10 @@ namespace SayMore.Model
 					}
 					else if (componentFile is AnnotationComponentFile)
 					{
-						/*System.Diagnostics.Debug.WriteLine("ANNOTATION");
-						var oralTags = componentFile.MetaDataFieldValues;
-						foreach (var field in oralTags)
-							System.Diagnostics.Debug.WriteLine(field);*/
 						searchableTags = annotationFileSearchableTags;
 					}
 					else if (componentFile is OralAnnotationComponentFile)
 					{
-						/*System.Diagnostics.Debug.WriteLine("ORAL");
-						var oralTags = componentFile.MetaDataFieldValues;
-						foreach (var field in oralTags)
-							System.Diagnostics.Debug.WriteLine(field);*/
 						searchableTags = annotationFileSearchableTags;
 					}
 					else
@@ -94,6 +97,7 @@ namespace SayMore.Model
 						searchableTags = new HashSet<string>(otherFileSearchableTags.Union(GetCustomFieldIds(componentFile)));
 					}
 
+					// Actually peforms the search and yields the session ID if found.
 					var fields = componentFile.MetaDataFieldValues;
 
 					foreach (var field in fields)
@@ -111,23 +115,20 @@ namespace SayMore.Model
 				}
 			}
 		}
-		
+
+
+		// Returns the custom fields for a given component file.
 		private HashSet<string> GetCustomFieldIds(ComponentFile file)
 		{
 			HashSet<string> customFields = new HashSet<string>();
 
-			if (file is ProjectElementComponentFile pef)
+			if (file is ProjectElementComponentFile projectElementFile)
 			{
-				System.Diagnostics.Debug.WriteLine("Is pef");
 				customFields = new HashSet<string>(
-					pef.GetCustomFields()
+					projectElementFile.GetCustomFields()
 						.Select(f => f.FieldId?.ToLowerInvariant())
 						.Where(id => !string.IsNullOrEmpty(id))
 				);
-			}
-			foreach (var thing in customFields)
-			{
-				System.Diagnostics.Debug.WriteLine(thing);
 			}
 			
 			return customFields;
