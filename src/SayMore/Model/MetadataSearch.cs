@@ -20,7 +20,7 @@ namespace SayMore.Model
 			_projectContext = projectContext;
 		}
 
-		private static readonly HashSet<string> SessionFileSearchableTags = new HashSet<string>
+		private static readonly HashSet<string> sessionFileSearchableTags = new HashSet<string>
 		{
 			"genre",
 			"title",
@@ -39,18 +39,19 @@ namespace SayMore.Model
 			"name"
 		};
 
-		private static readonly HashSet<string> AnnotationFileSearchableTags = new HashSet<string>
+		private static readonly HashSet<string> annotationFileSearchableTags = new HashSet<string>
 		{
-			"ANNOTATION_VALUE"
+			"annotation_value"
 		};
 
-		private static readonly HashSet<string> OtherFileSearchableTags = new HashSet<string>
+		private static readonly HashSet<string> otherFileSearchableTags = new HashSet<string>
 		{
 			"notes",  // This serves both for the general session notes and for the specific participant notes
 			"name",
-			"Microphone",
-			"Device",
-			"participants"
+			"microphone",
+			"device",
+			"participants",
+			"annotation_value"
 		};
 
 		public IEnumerable<string> SearchSessions(string query)
@@ -60,26 +61,45 @@ namespace SayMore.Model
 
 			foreach (var session in allSessions)
 			{
+				bool found = false;
 				foreach (var componentFile in session.GetComponentFiles())
 				{
-					var searchableTags = Path.GetExtension(componentFile.PathToAnnotatedFile) switch
+					HashSet<string> searchableTags;
+					if (componentFile.FileType is SessionFileType)
+						searchableTags = sessionFileSearchableTags;
+					else if (componentFile is AnnotationComponentFile)
 					{
-						".session" => SessionFileSearchableTags,
-						".annotation" => AnnotationFileSearchableTags,
-						_ => OtherFileSearchableTags // *****
-					};
+						System.Diagnostics.Debug.WriteLine("ANNOTATION");
+						var oralTags = componentFile.MetaDataFieldValues;
+						foreach (var field in oralTags)
+							System.Diagnostics.Debug.WriteLine(field);
+						searchableTags = annotationFileSearchableTags;
+					}
+					else if (componentFile is OralAnnotationComponentFile)
+					{
+						System.Diagnostics.Debug.WriteLine("ORAL");
+						var oralTags = componentFile.MetaDataFieldValues;
+						foreach (var field in oralTags)
+							System.Diagnostics.Debug.WriteLine(field);
+						searchableTags = annotationFileSearchableTags;
+					}
+					else
+						searchableTags = otherFileSearchableTags;
 
 					var fields = componentFile.MetaDataFieldValues;
 
 					foreach (var field in fields)
 					{
-						if (searchableTags.Contains(field.FieldId.ToLower()) && field.Value?.ToString().IndexOf(query, StringComparison.OrdinalIgnoreCase) >= 0)
+						if (searchableTags.Contains(field.FieldId?.ToLowerInvariant()) && 
+							(field.Value?.ToString() ?? string.Empty).IndexOf(query, StringComparison.OrdinalIgnoreCase) >= 0)
 						{
 							System.Diagnostics.Debug.WriteLine("Found " + query);
+							found = true;
 							yield return session.Id;
 							break;
 						}
 					}
+					if (found) break;
 				}
 			}
 		}
