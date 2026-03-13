@@ -41,6 +41,7 @@ namespace SayMore.UI.ElementListScreen
 		protected ComponentFileGrid _componentFilesControl;
 		protected Control _tabControlHostControl;
 		protected ImageList _tabControlImages;
+		protected HashSet<string> _metadataSearchMatchingIds;
 
 		protected Dictionary<string, ComponentEditorsTabControl> _tabControls =
 			new Dictionary<string, ComponentEditorsTabControl>();
@@ -246,10 +247,20 @@ namespace SayMore.UI.ElementListScreen
 			// If a search parameter was provided, restrict to elements whose Id
 			// contains the search text (case-insensitive). This applies to any
 			// non-empty searchParam (including 1-2 char searches).
-			if (!string.IsNullOrWhiteSpace(searchParam))
+			if(!string.IsNullOrWhiteSpace(searchParam)) 
 			{
-				items = items.Where(x => !string.IsNullOrEmpty(x.Id) &&
-					x.Id.IndexOf(searchParam, StringComparison.OrdinalIgnoreCase) >= 0);
+				if (_metadataSearchMatchingIds != null)
+				{
+					// Match by metadata OR by ID substring
+					items = items.Where(x => !string.IsNullOrEmpty(x.Id) &&
+						(_metadataSearchMatchingIds.Contains(x.Id) ||
+						 x.Id.IndexOf(searchParam, StringComparison.OrdinalIgnoreCase) >= 0));
+				}
+				else
+				{
+					items = items.Where(x => !string.IsNullOrEmpty(x.Id) &&
+						x.Id.IndexOf(searchParam, StringComparison.OrdinalIgnoreCase) >= 0);
+				}
 			}
 
 			_elementsGrid.Items = items;
