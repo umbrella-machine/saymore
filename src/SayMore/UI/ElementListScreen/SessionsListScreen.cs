@@ -66,7 +66,7 @@ namespace SayMore.UI.ElementListScreen
 		protected override void LoadElementList(object itemToSelectAfterLoad, string searchParam = null)
 		{
 			if (!string.IsNullOrWhiteSpace(searchParam))
-				_metadataSearch.SearchSession(searchParam);
+				_metadataSearch.SearchSessions(searchParam);
 			base.LoadElementList(itemToSelectAfterLoad, searchParam);
 		}
 
