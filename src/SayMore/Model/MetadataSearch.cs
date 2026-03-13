@@ -7,6 +7,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Xml;
 using SayMore.Model.Files;
+using System.Collections;
 
 namespace SayMore.Model
 {
@@ -48,15 +49,15 @@ namespace SayMore.Model
 
 		private static readonly HashSet<string> AnnotationFileSearchableTags = new HashSet<string>
 		{
-			"ANNOTATION_VALUE"
+			"annotation_value"
 		};
 
 		private static readonly HashSet<string> OtherFileSearchableTags = new HashSet<string>
 		{
 			"notes",  // This serves both for the general session notes and for the specific participant notes
 			"name",
-			"Microphone",
-			"Device",
+			"microphone",
+			"device",
 			"participants"
 		};
 
@@ -66,11 +67,15 @@ namespace SayMore.Model
 			System.Diagnostics.Debug.WriteLine("Searching for " + query);
 			var allSessions = _projectContext.Project.GetAllSessions(CancellationToken.None);
 
+			ArrayList sessionsMatchingSearchQuery = new ArrayList();
+			
 			foreach (var session in allSessions)
 			{
+				bool found = false;
+				
 				foreach (var componentFile in session.GetComponentFiles())
 				{
-					var searchableTags = Path.GetExtension(componentFile.PathToAnnotatedFile) switch
+					var searchableTags = Path.GetExtension(componentFile.PathToAnnotatedFile)?.ToLowerInvariant() switch
 					{
 						".session" => SessionFileSearchableTags,
 						".annotation" => AnnotationFileSearchableTags,
@@ -81,15 +86,19 @@ namespace SayMore.Model
 
 					foreach (var field in fields)
 					{
-						if (searchableTags.Contains(field.FieldId.ToLower()) && field.Value?.ToString().IndexOf(query, StringComparison.OrdinalIgnoreCase) >= 0)
+						if (searchableTags.Contains(field.FieldId?.ToLowerInvariant()) && 
+							field.ValueAsString?.IndexOf(query, StringComparison.OrdinalIgnoreCase) >= 0)
 						{
 							System.Diagnostics.Debug.WriteLine("Found " + query);
-							yield return session.Id;
+							found = true;
+							sessionsMatchingSearchQuery.Add(session.Id); // ****
 							break;
 						}
 					}
+					if (found) break;
 				}
 			}
+			return sessionsMatchingSearchQuery;
 		}
 	}
 }
