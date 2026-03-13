@@ -63,9 +63,9 @@ namespace SayMore.Model
 					var fields = componentFile.MetaDataFieldValues;
 					foreach (var field in fields)
 					{
-						if (SessionSearchableTags.Contains(field.FieldId.ToLower()) && String.Equals(field.Value?.ToString(), query, StringComparison.OrdinalIgnoreCase))
+						if (SessionSearchableTags.Contains(field.FieldId.ToLower()) && field.Value?.ToString().IndexOf(query, StringComparison.OrdinalIgnoreCase) >= 0)
 						{
-							Console.WriteLine("Found {0}", query);
+							System.Diagnostics.Debug.WriteLine("Found " + query);
 							return true;
 						}
 					}
