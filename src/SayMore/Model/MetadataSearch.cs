@@ -11,6 +11,12 @@ using System.Collections;
 
 namespace SayMore.Model
 {
+	/// ----------------------------------------------------------------------------------------
+	/// <summary>
+	/// This is a class that performs the searching for the search bar in the Sessions tab.
+	/// </summary>
+	/// ----------------------------------------------------------------------------------------
+  
 	public class MetadataSearch
 	{
 		
@@ -21,6 +27,7 @@ namespace SayMore.Model
 			_projectContext = projectContext;
 		}
 
+		// Tags we want to be able to search by based on file type
 		private static readonly HashSet<string> SessionFileSearchableTags = new HashSet<string>
 		{
 			"genre",
@@ -54,7 +61,8 @@ namespace SayMore.Model
 			"participants"
 		};
 
-		public ArrayList SearchSessions(string query)
+		// Method that performs the searching
+		public IEnumerable<string> SearchSessions(string query)
 		{
 			System.Diagnostics.Debug.WriteLine("Searching for " + query);
 			var allSessions = _projectContext.Project.GetAllSessions(CancellationToken.None);
