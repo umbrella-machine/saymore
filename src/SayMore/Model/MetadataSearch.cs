@@ -7,6 +7,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Xml;
 using SayMore.Model.Files;
+using System.Collections;
 
 namespace SayMore.Model
 {
@@ -50,23 +51,26 @@ namespace SayMore.Model
 			"name",
 			"microphone",
 			"device",
-			"participants"
+			"participants",
+			"recordist"
 		};
 
-		public IEnumerable<Session> SearchSessions(string query)
+		public ArrayList SearchSessions(string query)
 		{
 			System.Diagnostics.Debug.WriteLine("Searching for " + query);
 			var allSessions = _projectContext.Project.GetAllSessions(CancellationToken.None);
+
+			ArrayList sessionIdsWithMatches = new ArrayList();
 
 			foreach (var session in allSessions)
 			{
 				bool found = false;
 				foreach (var componentFile in session.GetComponentFiles())
 				{
-					var searchableTags = Path.GetExtension(componentFile.PathToAnnotatedFile)?.ToLowerInvariant() switch
+					var searchableTags = componentFile switch
 					{
-						".session" => SessionFileSearchableTags,
-						".annotation" => AnnotationFileSearchableTags,
+						{ FileType: SessionFileType } => SessionFileSearchableTags,
+						AnnotationComponentFile => AnnotationFileSearchableTags,
 						_ => OtherFileSearchableTags // *****
 					};
 
@@ -79,13 +83,14 @@ namespace SayMore.Model
 						{
 							System.Diagnostics.Debug.WriteLine("Found " + query);
 							found = true;
-							yield return session;
+							sessionIdsWithMatches.Add(session.Id);
 							break;
 						}
 					}
 					if (found) break;
 				}
 			}
+			return sessionIdsWithMatches;
 		}
 	}
 }
