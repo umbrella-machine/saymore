@@ -10,6 +10,9 @@
   <date type="string">2010-06-06</date>
   <notes type="string">hello</notes>
   <status type="string">Incoming</status>
+  <CustomFields>
+    <EarthTYpe type="string">Magma</EarthTYpe>
+  </CustomFields>
   <contributions type="xml">
     <contributor>
       <name>Awi Heole</name>

@@ -69,7 +69,9 @@ namespace SayMore.Model
 				{
 					HashSet<string> searchableTags;
 					if (componentFile.FileType is SessionFileType)
-						searchableTags = sessionFileSearchableTags;
+					{
+						searchableTags = new HashSet<string>(sessionFileSearchableTags.Union(GetCustomFieldIds(componentFile)));
+					}
 					else if (componentFile is AnnotationComponentFile)
 					{
 						/*System.Diagnostics.Debug.WriteLine("ANNOTATION");
@@ -87,7 +89,9 @@ namespace SayMore.Model
 						searchableTags = annotationFileSearchableTags;
 					}
 					else
+					{
 						searchableTags = new HashSet<string>(otherFileSearchableTags.Union(GetCustomFieldIds(componentFile)));
+					}
 
 					var fields = componentFile.MetaDataFieldValues;
 
@@ -108,8 +112,8 @@ namespace SayMore.Model
 		}
 		private HashSet<string> GetCustomFieldIds(ComponentFile file)
 		{
-			System.Diagnostics.Debug.WriteLine("GetCustomFieldIdsMethodCalled");
 			HashSet<string> customFields = new HashSet<string>();
+
 			if (file is ProjectElementComponentFile pef)
 			{
 				System.Diagnostics.Debug.WriteLine("Is pef");
