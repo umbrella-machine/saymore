@@ -120,6 +120,7 @@ namespace SayMore.Model
 						yield return session.Id;
 					}
 				}
+				if (found) break;
 			}
 		}
 
