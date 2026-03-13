@@ -1,4 +1,5 @@
 ﻿using SayMore.Model.Files;
+using SIL.Core.ClearShare;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -21,6 +22,7 @@ namespace SayMore.Model
 			_projectContext = projectContext;
 		}
 
+		// Searchable tags based on file type.
 		private static readonly HashSet<string> sessionFileSearchableTags = new HashSet<string>
 		{
 			"genre",
@@ -51,6 +53,7 @@ namespace SayMore.Model
 			"additional_task"
 		};
 
+		// We know this is not how you search for annotation files.
 		private static readonly HashSet<string> annotationFileSearchableTags = new HashSet<string>
 		{
 			"annotation_value"
@@ -70,7 +73,6 @@ namespace SayMore.Model
 
 		public IEnumerable<string> SearchSessions(string query)
 		{
-			System.Diagnostics.Debug.WriteLine("Searching for " + query);
 			var allSessions = _projectContext.Project.GetAllSessions(CancellationToken.None);
 
 			foreach (var session in allSessions)
@@ -105,19 +107,25 @@ namespace SayMore.Model
 						if (searchableTags.Contains(field.FieldId?.ToLowerInvariant()) && 
 							(field.Value?.ToString() ?? string.Empty).IndexOf(query, StringComparison.OrdinalIgnoreCase) >= 0)
 						{
-							System.Diagnostics.Debug.WriteLine("Found " + query);
 							found = true;
 							yield return session.Id;
 							break;
 						}
 					}
-					if (found) break;
+
+					// If the query wasn't found in the offical fields or the custom fields, check the contributer notes.
+					if (!found && componentFile.FileType is SessionFileType && ContainsContributorNotes(componentFile, query))
+					{
+						found = true;
+						yield return session.Id;
+					}
 				}
 			}
 		}
 
 
 		// Returns the custom fields for a given component file.
+		// Note: this does not work for audio files.
 		private HashSet<string> GetCustomFieldIds(ComponentFile file)
 		{
 			HashSet<string> customFields = new HashSet<string>();
@@ -132,6 +140,26 @@ namespace SayMore.Model
 			}
 			
 			return customFields;
+		}
+
+		// Checks through contributer notes of a given component file for a query.
+		private static bool ContainsContributorNotes(ComponentFile file, string query)
+		{
+			var contributionsField = file.MetaDataFieldValues
+				.FirstOrDefault(f => f.FieldId == SessionFileType.kContributionsFieldName);
+
+			if (contributionsField?.Value is ContributionCollection contributions)
+			{
+				foreach (var contribution in contributions)
+				{
+					if (!string.IsNullOrEmpty(contribution.Comments) &&
+						contribution.Comments.IndexOf(query, StringComparison.OrdinalIgnoreCase) >= 0)
+					{
+						return true;
+					}
+				}
+			}
+			return false;
 		}
 	}
 }
