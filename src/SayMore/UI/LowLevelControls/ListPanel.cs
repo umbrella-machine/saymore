@@ -277,9 +277,11 @@ namespace SayMore.UI.LowLevelControls
 			// If there are two or one characters, request a filtered search after a delay.
             if (text.Length >= 3)
 			{
-				// For 3+ chars, perform the filtered search immediately (no delay).
+				// For 3+ chars, perform the filtered after a half second to prevent searching on each keystroke
+				_searchTimer.Interval = 500;
 				_searchTimer.Stop();
-				SearchRequested?.Invoke(this, EventArgs.Empty);
+				_searchTimer.Start();
+				//SearchRequested?.Invoke(this, EventArgs.Empty);
 			}
 			else if (text.Length == 0)
 			{

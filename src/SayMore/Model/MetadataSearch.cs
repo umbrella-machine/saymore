@@ -55,7 +55,7 @@ namespace SayMore.Model
 
 		public IEnumerable<string> SearchSessions(string query)
 		{
-			System.Diagnostics.Debug.WriteLine("Searching for " + query);
+			//System.Diagnostics.Debug.WriteLine("Searching for " + query);
 			var allSessions = _projectContext.Project.GetAllSessions(CancellationToken.None);
 
 			foreach (var session in allSessions)
