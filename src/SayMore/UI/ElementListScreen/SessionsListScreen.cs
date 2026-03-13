@@ -1,15 +1,16 @@
-using System;
-using System.Drawing;
-using System.Windows.Forms;
 using L10NSharp;
-using SIL.Reporting;
 using SayMore.Media.Audio;
 using SayMore.Model;
 using SayMore.Properties;
 using SayMore.UI.ComponentEditors;
-using SayMore.UI.SessionRecording;
 using SayMore.UI.NewSessionsFromFiles;
 using SayMore.UI.ProjectWindow;
+using SayMore.UI.SessionRecording;
+using SIL.Reporting;
+using System;
+using System.Collections.Generic;
+using System.Drawing;
+using System.Windows.Forms;
 
 namespace SayMore.UI.ElementListScreen
 {
@@ -66,7 +67,14 @@ namespace SayMore.UI.ElementListScreen
 		protected override void LoadElementList(object itemToSelectAfterLoad, string searchParam = null)
 		{
 			if (!string.IsNullOrWhiteSpace(searchParam))
-				_metadataSearch.SearchSessions(searchParam);
+			{
+				var matchingIds = new HashSet<string>(_metadataSearch.SearchSessions(searchParam));
+				_metadataSearchMatchingIds = matchingIds;
+			}
+			else
+			{
+				_metadataSearchMatchingIds = null;
+			}
 			base.LoadElementList(itemToSelectAfterLoad, searchParam);
 		}
 
