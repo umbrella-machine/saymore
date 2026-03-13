@@ -1,4 +1,5 @@
 ﻿using System;
+using System.IO;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -19,7 +20,40 @@ namespace SayMore.Model
 			_projectContext = projectContext;
 		}
 
-		public bool SearchSession(string query)
+		private static readonly HashSet<string> SessionFileSearchableTags = new HashSet<string>
+		{
+			"genre",
+			"title",
+			"setting",
+			"participants",
+			"situation",
+			"synopsis",
+			"location",
+			"access",
+			"notes",  // This serves both for the general session notes and for the specific participant notes
+			"location_continent",
+			"location_country",
+			"location_region",
+			"location_address",
+			"sub-genre",
+			"name"
+		};
+
+		private static readonly HashSet<string> AnnotationFileSearchableTags = new HashSet<string>
+		{
+			"ANNOTATION_VALUE"
+		};
+
+		private static readonly HashSet<string> OtherFileSearchableTags = new HashSet<string>
+		{
+			"notes",  // This serves both for the general session notes and for the specific participant notes
+			"name",
+			"Microphone",
+			"Device",
+			"participants"
+		};
+
+		public IEnumerable<string> SearchSessions(string query)
 		{
 			System.Diagnostics.Debug.WriteLine("Searching for " + query);
 			var allSessions = _projectContext.Project.GetAllSessions(CancellationToken.None);
@@ -28,50 +62,26 @@ namespace SayMore.Model
 			{
 				foreach (var componentFile in session.GetComponentFiles())
 				{
-					var SessionSearchableTags = new HashSet<string>
+					var searchableTags = Path.GetExtension(componentFile.PathToAnnotatedFile) switch
 					{
-						"genre",
-						"title",
-						"setting",
-						"participants",
-						"situation",
-						"synopsis",
-						"location",
-						"access",
-						"notes",  // This serves both for the session notes and for the participant notes
-						"location_continent",
-						"location_country",
-						"location_region",
-						"location_address",
-						"sub-genre",
-						"name"
+						".session" => SessionFileSearchableTags,
+						".annotation" => AnnotationFileSearchableTags,
+						_ => OtherFileSearchableTags // *****
 					};
-					/*switch ()
-					{
-						case SessionFileType.Session:
-						
-						case SessionFileType.Eaf:
-						if (SearchEaf(query, file))
-						{
-							return true;
-						}
-						break;
-					case SessionFileType.Meta:
-						var searchableTags = 
-						break;
-				}*/
+
 					var fields = componentFile.MetaDataFieldValues;
+
 					foreach (var field in fields)
 					{
-						if (SessionSearchableTags.Contains(field.FieldId.ToLower()) && field.Value?.ToString().IndexOf(query, StringComparison.OrdinalIgnoreCase) >= 0)
+						if (searchableTags.Contains(field.FieldId.ToLower()) && field.Value?.ToString().IndexOf(query, StringComparison.OrdinalIgnoreCase) >= 0)
 						{
 							System.Diagnostics.Debug.WriteLine("Found " + query);
-							return true;
+							yield return session.Id;
+							break;
 						}
 					}
 				}
 			}
-		return false;
 		}
 	}
 }
